@@ -1,0 +1,219 @@
+﻿using ColumnOptions = Serilog.Sinks.MSSqlServer.ColumnOptions;
+
+namespace OrganizerPRO.Infrastructure.Extensions;
+
+public static class SerilogExtensions
+{
+    public static void RegisterSerilog(this WebApplicationBuilder builder)
+    {
+        Serilog.Debugging.SelfLog.Enable(msg => Console.WriteLine(msg));
+        builder.Host.UseSerilog((context, configuration) =>
+            configuration.ReadFrom.Configuration(context.Configuration)
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Error)
+                .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Error)
+                .MinimumLevel.Override("MudBlazor", LogEventLevel.Information)
+                .MinimumLevel.Override("Serilog", LogEventLevel.Information)
+                .MinimumLevel.Override("Microsoft.EntityFrameworkCore.AddOrUpdate", LogEventLevel.Error)
+                .MinimumLevel.Override("Hangfire.BackgroundJobServer", LogEventLevel.Error)
+                .MinimumLevel.Override("Hangfire.InMemory.InMemoryStorage", LogEventLevel.Error)
+                .MinimumLevel.Override("Hangfire.Server.BackgroundServerProcess", LogEventLevel.Error)
+                .MinimumLevel.Override("Hangfire.Server.ServerHeartbeatProcess", LogEventLevel.Error)
+                .MinimumLevel.Override("Hangfire.Processing.BackgroundExecution", LogEventLevel.Error)
+                .MinimumLevel.Override("ZiggyCreatures.Caching.Fusion.FusionCache", LogEventLevel.Error)
+                .MinimumLevel.Override("ActualLab.CommandR.Interception.CommandServiceInterceptor", LogEventLevel.Error)
+                .MinimumLevel.Override("ActualLab.Fusion.Interception.ComputeServiceInterceptor", LogEventLevel.Error)
+                .MinimumLevel.Override("ActualLab.Fusion.Extensions.Services.InMemoryKeyValueStore", LogEventLevel.Error)
+                .MinimumLevel.Override("ActualLab.Fusion.Operations.Internal.CompletionProducer", LogEventLevel.Error)
+                .MinimumLevel.Override("ActualLab.Fusion.Internal.ComputedGraphPruner", LogEventLevel.Error)
+                .MinimumLevel.Override("CleanArchitecture.Blazor.Server.UI.Services.Fusion.UserSessionTracker", LogEventLevel.Error)
+                .MinimumLevel.Override("CleanArchitecture.Blazor.Server.UI.Services.Fusion.OnlineUserTracker", LogEventLevel.Error)
+                .Enrich.FromLogContext()
+                .Enrich.WithUtcTime()
+                .Enrich.WithUserInfo()
+                .WriteTo.Async(wt => wt.File("./log/log-.txt", rollingInterval: RollingInterval.Day))
+                .WriteTo.Async(wt =>
+                    wt.Console(
+                        outputTemplate:
+                        "[{Timestamp:HH:mm:ss} {Level:u3} {ClientIp}] {Message:lj}{NewLine}{Exception}"))
+                .ApplyConfigPreferences(context.Configuration)
+        );
+    }
+
+    private static void ApplyConfigPreferences(this LoggerConfiguration serilogConfig, IConfiguration configuration)
+    {
+        WriteToDatabase(serilogConfig, configuration);
+    }
+
+    private static void WriteToDatabase(LoggerConfiguration serilogConfig, IConfiguration configuration)
+    {
+        if (configuration.GetValue<bool>("UseInMemoryDatabase")) return;
+
+        var dbProvider =
+            configuration.GetValue<string>($"{nameof(DatabaseSettings)}:{nameof(DatabaseSettings.DBProvider)}");
+        var connectionString =
+            configuration.GetValue<string>($"{nameof(DatabaseSettings)}:{nameof(DatabaseSettings.ConnectionString)}");
+        switch (dbProvider)
+        {
+            case DbProviderKeys.SqlServer:
+                WriteToSqlServer(serilogConfig, connectionString);
+                break;
+            case DbProviderKeys.Npgsql:
+                WriteToNpgsql(serilogConfig, connectionString);
+                break;
+            case DbProviderKeys.SqLite:
+                WriteToSqLite(serilogConfig, "\\BlazorDashboardDb.db");
+                break;
+        }
+    }
+
+   
+
+    private static void WriteToSqlServer(LoggerConfiguration serilogConfig, string? connectionString)
+    {
+        if (string.IsNullOrEmpty(connectionString)) return;
+
+        MSSqlServerSinkOptions sinkOpts = new()
+        {
+            TableName = "SystemLogs",
+            SchemaName = "dbo",
+            AutoCreateSqlDatabase = false,
+            AutoCreateSqlTable = false,
+            BatchPostingLimit = 100,
+            BatchPeriod = new TimeSpan(0, 0, 20),
+            
+        };
+
+        ColumnOptions columnOpts = new()
+        {
+            Store = new Collection<StandardColumn>
+            {
+                StandardColumn.Id,
+                StandardColumn.TimeStamp,
+                StandardColumn.Level,
+                StandardColumn.LogEvent,
+                StandardColumn.Exception,
+                StandardColumn.Message,
+                StandardColumn.MessageTemplate,
+                StandardColumn.Properties
+            },
+            AdditionalColumns = new Collection<SqlColumn>
+            {
+                new()
+                {
+                    ColumnName = "ClientIP", PropertyName = "ClientIP",AllowNull=true, DataType = SqlDbType.NVarChar, DataLength = 64
+                },
+                new()
+                {
+                    ColumnName = "UserName", PropertyName = "UserName",AllowNull=true, DataType = SqlDbType.NVarChar
+                },
+                new()
+                {
+                    ColumnName = "ClientAgent", PropertyName = "ClientAgent",AllowNull=true, DataType = SqlDbType.NVarChar
+                }
+            },
+            TimeStamp = { ConvertToUtc = true, ColumnName = "TimeStamp" },
+            LogEvent = { DataLength = -1 }
+        };
+        columnOpts.PrimaryKey = columnOpts.Id;
+        columnOpts.TimeStamp.NonClusteredIndex = true;
+
+        serilogConfig.WriteTo.Async(wt => wt.MSSqlServer(
+            connectionString,
+            sinkOpts,
+            columnOptions: columnOpts
+        ));
+    }
+
+    private static void WriteToNpgsql(LoggerConfiguration serilogConfig, string? connectionString)
+    {
+        if (string.IsNullOrEmpty(connectionString)) return;
+
+        const string tableName = "system_logs";
+        //Used columns (Key is a column name) 
+        //Column type is writer's constructor parameter
+        IDictionary<string, ColumnWriterBase> columnOptions = new Dictionary<string, ColumnWriterBase>
+        {
+            { "message", new RenderedMessageColumnWriter(NpgsqlDbType.Text) },
+            { "message_template", new MessageTemplateColumnWriter(NpgsqlDbType.Text) },
+            { "level", new LevelColumnWriter(true, NpgsqlDbType.Varchar) },
+            { "time_stamp", new TimestampColumnWriter(NpgsqlDbType.Timestamp) },
+            { "exception", new ExceptionColumnWriter(NpgsqlDbType.Text) },
+            { "properties", new PropertiesColumnWriter(NpgsqlDbType.Varchar) },
+            { "log_event", new LogEventSerializedColumnWriter(NpgsqlDbType.Varchar) },
+            { "user_name", new SinglePropertyColumnWriter("UserName", PropertyWriteMethod.Raw, NpgsqlDbType.Varchar) },
+            { "client_ip", new SinglePropertyColumnWriter("ClientIP", PropertyWriteMethod.Raw, NpgsqlDbType.Varchar) },
+            {
+                "client_agent",
+                new SinglePropertyColumnWriter("ClientAgent", PropertyWriteMethod.ToString, NpgsqlDbType.Varchar)
+            }
+        };
+        serilogConfig.WriteTo.Async(wt => wt.PostgreSQL(
+            connectionString,
+            tableName,
+            columnOptions,
+            LogEventLevel.Information,
+            needAutoCreateTable: false,
+            schemaName: "public",
+            useCopy: false,
+            failureCallback: e => Console.WriteLine($"Sink error: {e.Message}")
+        ));
+    }
+
+    private static void WriteToSqLite(LoggerConfiguration serilogConfig, string dbname)
+    {
+        var sqlPath = Environment.CurrentDirectory + dbname;
+        const string tableName = "SystemLogs";
+        serilogConfig.WriteTo.Async(wt => wt.SQLite(
+            sqlPath,
+            tableName,
+            LogEventLevel.Information
+        ).CreateLogger());
+    }
+
+
+    public static LoggerConfiguration WithUtcTime(this LoggerEnrichmentConfiguration enrichmentConfiguration)
+    {
+        
+        return enrichmentConfiguration.With<UtcTimestampEnricher>();
+    }
+    public static LoggerConfiguration WithUserInfo(this LoggerEnrichmentConfiguration enrichmentConfiguration)
+    {
+        return enrichmentConfiguration.With<UserInfoEnricher>();
+    }
+}
+
+internal class UtcTimestampEnricher : ILogEventEnricher
+{
+    public void Enrich(LogEvent logEvent, ILogEventPropertyFactory pf)
+    {
+        logEvent.AddOrUpdateProperty(pf.CreateProperty("TimeStamp", logEvent.Timestamp.UtcDateTime));
+    }
+}
+internal class UserInfoEnricher : ILogEventEnricher
+{
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    public UserInfoEnricher() : this(new HttpContextAccessor())
+    {
+    }
+    //Dependency injection can be used to retrieve any service required to get a user or any data.
+    //Here, I easily get data from HTTPContext
+    public UserInfoEnricher(IHttpContextAccessor httpContextAccessor)
+    {
+        _httpContextAccessor = httpContextAccessor;
+    }
+    public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
+    {
+        var userName = _httpContextAccessor.HttpContext?.User?.Identity?.Name ?? "";
+        var headers = _httpContextAccessor.HttpContext?.Request?.Headers;
+        var clientIp = headers != null && headers.ContainsKey("X-Forwarded-For")
+        ? headers["X-Forwarded-For"].ToString().Split(',').First().Trim()
+        : _httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? "";
+        var clientAgent = headers != null && headers.ContainsKey("User-Agent")
+            ? headers["User-Agent"].ToString()
+            : "";
+
+        logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("UserName", userName));
+        logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("ClientIP", clientIp));
+        logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("ClientAgent", clientAgent));
+    }
+}

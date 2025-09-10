@@ -1,5 +1,5 @@
 ﻿namespace OrganizerPRO.Domain.Entities.Identity;
-public class ApplicationUser : Microsoft.AspNet.Identity.EntityFramework.IdentityUser, IAuditableEntity
+public class ApplicationUser : IdentityUser, IAuditableEntity
 {
     public ApplicationUser()
     {

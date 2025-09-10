@@ -1,5 +1,5 @@
 ﻿namespace OrganizerPRO.Domain.Entities.Identity;
-public class ApplicationRole : Microsoft.AspNet.Identity.EntityFramework.IdentityRole, IAuditableEntity
+public class ApplicationRole : Microsoft.AspNetCore.Identity.IdentityRole, IAuditableEntity
 {
     public ApplicationRole()
     {
