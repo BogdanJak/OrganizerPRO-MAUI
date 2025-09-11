@@ -1,4 +1,6 @@
-﻿namespace OrganizerPRO.Application.Common.Interfaces;
+﻿using OrganizerPRO.Domain.Entities.Dashboard;
+
+namespace OrganizerPRO.Application.Common.Interfaces;
 
 
 public interface IApplicationDbContext : IAsyncDisposable
@@ -11,7 +13,7 @@ public interface IApplicationDbContext : IAsyncDisposable
     DbSet<LoginAudit> LoginAudits { get; set; }
     DbSet<UserLoginRiskSummary> UserLoginRiskSummaries { get; set; }
     DbSet<Permission> Permissions { get; set; }
-
+    DbSet<PanelList> PanelLists { get; set; }
 
 
     ChangeTracker ChangeTracker { get; }

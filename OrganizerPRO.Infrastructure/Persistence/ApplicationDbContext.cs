@@ -1,4 +1,6 @@
-﻿namespace OrganizerPRO.Infrastructure.Persistence;
+﻿using OrganizerPRO.Domain.Entities.Dashboard;
+
+namespace OrganizerPRO.Infrastructure.Persistence;
 
 
 public class ApplicationDbContext : IdentityDbContext<
@@ -19,6 +21,8 @@ public class ApplicationDbContext : IdentityDbContext<
     public DbSet<UserLoginRiskSummary> UserLoginRiskSummaries { get; set; }
     public DbSet<Localizer> Localizers { get; set; }
     public DbSet<Permission> Permissions { get; set; }
+    public DbSet<PanelList> PanelLists { get; set; }
+
 
 
     public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }

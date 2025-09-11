@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using OrganizerPRO.Application;
 using OrganizerPRO.Infrastructure;
 using OrganizerPRO.Services;
@@ -12,9 +11,7 @@ public static class MauiProgram
     public static MauiApp CreateMauiApp()
     {
         var builder = MauiApp.CreateBuilder();
-        
-        builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-        
+       
         builder
             .UseMauiApp<App>()
             .ConfigureFonts(fonts =>
@@ -23,23 +20,15 @@ public static class MauiProgram
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
 
-        builder.Services.AddControllers();
-
-        builder.Services
-            .AddApplicationServices()
-            .AddInfrastructureServices(builder.Configuration)
-            .AddOrganizerPROServices(builder.Configuration);
 
         builder.Services.AddSingleton<IFormFactor, FormFactor>();
 
-        builder.Services.AddMauiBlazorWebView();
 
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();
         builder.Logging.AddDebug();
 #endif
-
-        builder.Services.AddAuthorizationCore();
+        builder.Services.AddMauiBlazorWebView();
 
         return builder.Build();
     }

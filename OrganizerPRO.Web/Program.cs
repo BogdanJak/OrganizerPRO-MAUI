@@ -1,29 +1,20 @@
-using OrganizerPRO.Web.Components;
-using OrganizerPRO.Shared.Services;
-using OrganizerPRO.Web.Services;
-
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+builder.RegisterSerilog();
+
+builder.Services
+            .AddApplicationServices()
+            .AddInfrastructureServices(builder.Configuration)
+            .AddOrganizerPROServices(builder.Configuration);
 
 builder.Services.AddSingleton<IFormFactor, FormFactor>();
 
 var app = builder.Build();
 
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    app.UseHsts();
-}
+app.ConfigureServer(builder.Configuration);
 
-app.UseHttpsRedirection();
+await app.InitializeDatabaseAsync().ConfigureAwait(false);
 
-app.UseStaticFiles();
-app.UseAntiforgery();
+app.InitializeCacheFactory();
 
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode()
-    .AddAdditionalAssemblies(typeof(OrganizerPRO.Shared._Imports).Assembly);
-
-app.Run();
+await app.RunAsync().ConfigureAwait(false);

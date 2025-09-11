@@ -1,0 +1,41 @@
+﻿EntityFrameworkCore\add-migration Initial -context ApplicationDbContext
+
+EntityFrameworkCore\update-database -context ApplicationDbContext
+
+EntityFrameworkCore\remove-migration -context ApplicationDbContext
+
+EntityFrameworkCore\Drop-Database -context ApplicationDbContext
+
+EntityFrameworkCore\Get-DbContext -context ApplicationDbContext
+
+EntityFrameworkCore\Remove-Migration -context ApplicationDbContext
+
+
+dotnet new globaljson --sdk-version 8.0.301
+
+dotnet new globaljson --sdk-version 9.0.100-preview.7.24407.12
+
+electronize build /target win
+
+
+dotnet workload install android
+dotnet workload install ios
+dotnet workload install maccatalyst
+dotnet workload install maui-windows
+dotnet workload install wasm-tools
+
+dotnet add package Swashbuckle --version 3.1.0
+
+
+dotnet ef migrations add Youtube `
+  --context ApplicationDbContext `
+  --startup-project ../OrganizerPRO.Server/OrganizerPRO.Server.csproj `
+  --project ../OrganizerPRO.Infrastructure/OrganizerPRO.Infrastructure.csproj `
+  --output-dir ../Migrators/Migrators.MSSQL/Migrations
+
+  
+
+  dotnet ef migrations add Youtube --context ApplicationDbContext --startup-project OrganizerPRO.Server/OrganizerPRO.Server.csproj --project Migrators/Migrators.MSSQL/Migrators.MSSQL.csproj --output-dir Migrations
+
+  dotnet ef database update --startup-project OrganizerPRO.Server/OrganizerPRO.Server.csproj --project Migrators/Migrators.MSSQL/Migrators.MSSQL.csproj
+

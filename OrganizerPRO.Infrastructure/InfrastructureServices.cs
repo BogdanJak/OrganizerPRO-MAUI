@@ -263,7 +263,7 @@ public static class InfrastructureServices
             .AddScoped<IUserProfileState, UserProfileState>()
             .AddAuthorizationCore(options =>
             {
-                options.AddPolicy("CanPurge", policy => policy.RequireUserName(Users.Administrator));
+                options.AddPolicy("CanPurge", policy => policy.RequireUserName(Users.SuperAdministrator));
                 // Here I stored necessary permissions/roles in a constant
                 foreach (var prop in typeof(Permissions).GetNestedTypes().SelectMany(c =>
                              c.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)))
