@@ -3,10 +3,10 @@
 namespace OrganizerPRO.Infrastructure.Persistence;
 
 
-public class SyncLocalizationContext : DbContext, ISyncLocalizationContext, IDataProtectionKeyContext
+public class SyncLocalizationDbContext : DbContext, ISyncLocalizationDbContext, IDataProtectionKeyContext
 {
 
-    public SyncLocalizationContext(DbContextOptions<SyncLocalizationContext> options)
+    public SyncLocalizationDbContext(DbContextOptions<SyncLocalizationDbContext> options)
             : base(options)
     {
     }

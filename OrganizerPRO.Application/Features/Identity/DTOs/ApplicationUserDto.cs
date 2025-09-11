@@ -1,59 +1,57 @@
 ﻿namespace OrganizerPRO.Application.Features.Identity.DTOs;
 
-[Description("Users")]
+
 public class ApplicationUserDto
 {
-    [Description("User Id")] public string Id { get; set; } = string.Empty;
+    public string Id { get; set; } = string.Empty;
 
-    [Description("User Name")] public string UserName { get; set; } = string.Empty;
+    public string UserName { get; set; } = string.Empty;
 
-    [Description("Full Name")] public string? DisplayName { get; set; }
+    public string? DisplayName { get; set; }
 
-    [Description("Provider")] public string? Provider { get; set; } = "Local";
+    public string? Provider { get; set; } = "Local";
 
-    [Description("Tenant Id")] public string? TenantId { get; set; }
+    public string? TenantId { get; set; }
 
-    [Description("Tenant")] public TenantDto? Tenant { get; set; }
+    public TenantDto? Tenant { get; set; }
 
-    [Description("Profile Photo")] public string? ProfilePictureDataUrl { get; set; }
+    public string? ProfilePictureDataUrl { get; set; }
 
-    [Description("Email")] public string Email { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
 
-    [Description("Phone Number")] public string? PhoneNumber { get; set; }
+    public string? PhoneNumber { get; set; }
 
-    [Description("Superior Id")] public string? SuperiorId { get; set; }
+    public string? SuperiorId { get; set; }
 
-    [Description("Superior")] public ApplicationUserDto? Superior { get; set; }
+    public ApplicationUserDto? Superior { get; set; }
 
-    [Description("Assigned Roles")] public string[]? AssignedRoles { get; set; }
+    public string[]? AssignedRoles { get; set; }
 
-    [Description("Default Role")] public string? DefaultRole => AssignedRoles?.FirstOrDefault();
+    public string? DefaultRole => AssignedRoles?.FirstOrDefault();
 
-    [Description("Active")] public bool IsActive { get; set; }
+    public bool IsActive { get; set; }
 
-    [Description("Is Live")] public bool IsLive { get; set; }
+    public bool IsLive { get; set; }
 
-    [Description("Password")] public string? Password { get; set; }
+    public string? Password { get; set; }
 
-    [Description("Confirm Password")] public string? ConfirmPassword { get; set; }
-    [Description("Email Confirmed")] public bool EmailConfirmed { get; set; }
+    public string? ConfirmPassword { get; set; }
+    public bool EmailConfirmed { get; set; }
 
-    [Description("Status")] public DateTimeOffset? LockoutEnd { get; set; }
-    [Description("Time Zone")]
+    public DateTimeOffset? LockoutEnd { get; set; }
     public string? TimeZoneId { get; set; }
-    [Description("Local Time Offset")]
     public TimeSpan LocalTimeOffset => string.IsNullOrEmpty(TimeZoneId)
     ? TimeZoneInfo.Local.BaseUtcOffset
     : TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId).BaseUtcOffset;
-    [Description("Language")]
+    
     public string? LanguageCode { get; set; }
-    [Description("Last Modified")]
+    
     public DateTime? LastModified { get; set; }
-    [Description("Last Modified By")]
+    
     public string? LastModifiedBy { get; set; }
-    [Description("CreatedAt")]
+    
     public DateTime? Created { get; set; }
-    [Description("CreatedAt By")]
+    
     public string? CreatedBy { get; set; }
  
     public UserProfile ToUserProfile()

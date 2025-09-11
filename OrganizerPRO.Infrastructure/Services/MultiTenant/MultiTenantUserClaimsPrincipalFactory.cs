@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace OrganizerPRO.Infrastructure.Services.MultiTenant;
 
-namespace OrganizerPRO.Infrastructure.Services.MultiTenant;
 public class MultiTenantUserClaimsPrincipalFactory : UserClaimsPrincipalFactory<ApplicationUser, ApplicationRole>
 {
     public MultiTenantUserClaimsPrincipalFactory(UserManager<ApplicationUser> userManager,
@@ -40,9 +37,9 @@ public class MultiTenantUserClaimsPrincipalFactory : UserClaimsPrincipalFactory<
 
     private void AddSuperiorClaims(ApplicationUser user, ClaimsIdentity identity)
     {
-        if (user.SuperiorId.HasValue)
+        if (!string.IsNullOrEmpty(user.SuperiorId))
         {
-            identity.AddClaim(new Claim(ApplicationClaimTypes.SuperiorId, user.SuperiorId.Value.ToString()));
+            identity.AddClaim(new Claim(ApplicationClaimTypes.SuperiorId, user.SuperiorId));
         }
     }
 

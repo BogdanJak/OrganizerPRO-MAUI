@@ -1,6 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using OrganizerPRO.Application;
-using OrganizerPRO.Infrastructure;
 using OrganizerPRO.Services;
 using OrganizerPRO.Shared.Services;
 

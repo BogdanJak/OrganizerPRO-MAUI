@@ -3,5 +3,5 @@
 
 public interface ISyncLocalizationDbContextFactory
 {
-    ValueTask<ISyncLocalizationContext> CreateAsync(CancellationToken ct = default);
+    ValueTask<ISyncLocalizationDbContext> CreateAsync(CancellationToken ct = default);
 }

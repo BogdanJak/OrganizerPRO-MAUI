@@ -81,3 +81,4 @@ global using System.Security.Claims;
 global using System.Text.Json;
 global using System.Text.Json.Serialization;
 global using ZiggyCreatures.Caching.Fusion;
+global using OrganizerPRO.Infrastructure.Persistence.Conversions;

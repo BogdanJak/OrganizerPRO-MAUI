@@ -4,7 +4,7 @@ namespace OrganizerPRO.Controllers;
 
 
 [ApiController]
-[Route("[controller]")]
+[Microsoft.AspNetCore.Mvc.Route("[controller]")]
 public class AuthController : ControllerBase
 {
     private readonly IConfiguration _config;

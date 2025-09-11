@@ -1,4 +1,6 @@
-﻿namespace OrganizerPRO.Web.Services;
+﻿using OrganizerPRO.Application.Common.Interfaces;
+
+namespace OrganizerPRO.Web.Services;
 
 
 public static class OrganizerPROServices
@@ -7,6 +9,7 @@ public static class OrganizerPROServices
     {
         services.AddRazorComponents().AddInteractiveServerComponents().AddHubOptions(options => options.MaximumReceiveMessageSize = 64 * 1024);
         services.AddCascadingAuthenticationState();
+        services.AddServerSideBlazor().AddHubOptions(o => { o.MaximumReceiveMessageSize = 102400000; });
 
         services.AddControllers();
 
@@ -16,11 +19,26 @@ public static class OrganizerPROServices
                 options.MaximumReceiveMessageSize = 64 * 1024;
                 options.AddFilter<UserContextHubFilter>();
             });
+
+        services.AddScoped<LocalizationCookiesMiddleware>()
+            .Configure<RequestLocalizationOptions>(options =>
+            {
+                options.AddSupportedUICultures(LocalizationConstants.SupportedLanguages.Select(x => x.Code).ToArray());
+                options.AddSupportedCultures(LocalizationConstants.SupportedLanguages.Select(x => x.Code).ToArray());
+                options.FallBackToParentUICultures = true;
+            })
+            .AddLocalization(options => options.ResourcesPath = LocalizationConstants.ResourcesPath);
+
+        services.AddExceptionHandler<GlobalExceptionHandler>();
+        services.AddProblemDetails();
+        services.AddHealthChecks();
+
         services.AddScoped<LocalTimeOffset>();
         services.AddScoped<HubClient>();
 
         services
             .AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>()
+            .AddScoped<IPermissionHelper, PermissionHelper>()
             .AddScoped<UserPermissionAssignmentService>()
             .AddScoped<RolePermissionAssignmentService>()
             .AddScoped<BlazorDownloadFileService>()
@@ -91,7 +109,7 @@ public static class OrganizerPROServices
 
         app.MapAdditionalIdentityEndpoints();
         app.UseForwardedHeaders();
-        app.UseWebSockets(new WebSocketOptions()
+        app.UseWebSockets(new Microsoft.AspNetCore.Builder.WebSocketOptions()
         {
             KeepAliveInterval = TimeSpan.FromSeconds(30),
         });

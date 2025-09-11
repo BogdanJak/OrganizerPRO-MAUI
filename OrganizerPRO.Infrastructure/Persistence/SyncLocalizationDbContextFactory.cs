@@ -1,11 +1,11 @@
 ﻿namespace OrganizerPRO.Infrastructure.Persistence;
 
 
-internal sealed class SyncLocalizationDbContextFactory(IDbContextFactory<SyncLocalizationContext> efFactory) : ISyncLocalizationDbContextFactory
+internal sealed class SyncLocalizationDbContextFactory(IDbContextFactory<SyncLocalizationDbContext> efFactory) : ISyncLocalizationDbContextFactory
 {
-    public ValueTask<ISyncLocalizationContext> CreateAsync(CancellationToken ct = default)
+    public ValueTask<ISyncLocalizationDbContext> CreateAsync(CancellationToken ct = default)
     {
         var dbContext = efFactory.CreateDbContext();
-        return new ValueTask<ISyncLocalizationContext>(dbContext);
+        return new ValueTask<ISyncLocalizationDbContext>(dbContext);
     }
 }

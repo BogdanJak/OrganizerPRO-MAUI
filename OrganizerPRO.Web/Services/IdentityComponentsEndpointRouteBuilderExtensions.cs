@@ -1,4 +1,6 @@
-﻿namespace OrganizerPRO.Web.Services;
+﻿using OrganizerPRO.Shared.Pages.Identity.Login;
+
+namespace OrganizerPRO.Web.Services;
 
 
 

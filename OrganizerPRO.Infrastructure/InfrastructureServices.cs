@@ -1,5 +1,6 @@
 ﻿
 
+using OrganizerPRO.Application.Common.Interfaces;
 using OrganizerPRO.Infrastructure.Services.Circuits;
 
 namespace OrganizerPRO.Infrastructure;
@@ -17,9 +18,9 @@ public static class InfrastructureServices
     private const string USE_IN_MEMORY_DATABASE_KEY = "UseInMemoryDatabase";
     private const string IN_MEMORY_DATABASE_NAME = "BlazorDashboardDb";
     private const string NPGSQL_ENABLE_LEGACY_TIMESTAMP_BEHAVIOR = "Npgsql.EnableLegacyTimestampBehavior";
-    private const string POSTGRESQL_MIGRATIONS_ASSEMBLY = "CleanArchitecture.Blazor.Migrators.PostgreSQL";
-    private const string MSSQL_MIGRATIONS_ASSEMBLY = "CleanArchitecture.Blazor.Migrators.MSSQL";
-    private const string SQLITE_MIGRATIONS_ASSEMBLY = "CleanArchitecture.Blazor.Migrators.SqLite";
+    private const string POSTGRESQL_MIGRATIONS_ASSEMBLY = "Migrators.PostgreSQL";
+    private const string MSSQL_MIGRATIONS_ASSEMBLY = "Migrators.MSSQL";
+    private const string SQLITE_MIGRATIONS_ASSEMBLY = "Migrators.SqLite";
     private const string SMTP_CLIENT_OPTIONS_DEFAULT_FROM_EMAIL = "SmtpClientOptions:DefaultFromEmail";
     private const string EMAIL_TEMPLATES_PATH = "Resources/EmailTemplates";
     private const string DEFAULT_FROM_EMAIL = "noreply@blazorserver.com";
@@ -90,7 +91,7 @@ public static class InfrastructureServices
                 m.UseDatabase(databaseSettings.DBProvider, databaseSettings.ConnectionString);
             }, ServiceLifetime.Scoped);
 
-            services.AddDbContext<SyncLocalizationContext>((p, m) =>
+            services.AddDbContextFactory<SyncLocalizationDbContext>((p, m) =>
             {
                 var databaseSettings = p.GetRequiredService<IOptions<DatabaseSettings>>().Value;
                 m.UseExceptionProcessor(databaseSettings.DBProvider);
@@ -161,6 +162,7 @@ public static class InfrastructureServices
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IRoleService, RoleService>();
         services.AddScoped<ITenantSwitchService, TenantSwitchService>();
+        services.AddScoped<IValidationService, ValidationService>();
 
 
         // Configure HttpClient for GeolocationService
@@ -211,8 +213,6 @@ public static class InfrastructureServices
             .AddDefaultTokenProviders();
 
 
-
-        // Replace the default SignInManager with AuditSignInManager
         var signInManagerDescriptor = services.FirstOrDefault(d => d.ServiceType == typeof(SignInManager<ApplicationUser>));
         if (signInManagerDescriptor != null)
         {
@@ -220,14 +220,10 @@ public static class InfrastructureServices
         }
         services.AddScoped<SignInManager<ApplicationUser>, AuditSignInManager<ApplicationUser>>();
 
-        // Add the custom role validator MultiTenantRoleValidator to override the default validation logic.
-        // Ensures role names are unique within each tenant.
         services.AddScoped<IRoleValidator<ApplicationRole>, MultiTenantRoleValidator>();
 
-        // Find the default RoleValidator<ApplicationRole> registration in the service collection.
         var defaultRoleValidator = services.FirstOrDefault(descriptor => descriptor.ImplementationType == typeof(RoleValidator<ApplicationRole>));
 
-        // If the default role validator is found, remove it to ensure only MultiTenantRoleValidator is used.
         if (defaultRoleValidator != null)
         {
             services.Remove(defaultRoleValidator);
@@ -264,7 +260,7 @@ public static class InfrastructureServices
             .AddAuthorizationCore(options =>
             {
                 options.AddPolicy("CanPurge", policy => policy.RequireUserName(Users.SuperAdministrator));
-                // Here I stored necessary permissions/roles in a constant
+
                 foreach (var prop in typeof(Permissions).GetNestedTypes().SelectMany(c =>
                              c.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)))
                 {
@@ -347,7 +343,7 @@ public static class InfrastructureServices
         // Circuit and state management
         services.AddScoped<CircuitHandler, UserSessionCircuitHandler>();
         services.AddSingleton<IUsersStateContainer, UsersStateContainer>();
-
+        services.AddScoped<IPermissionService, PermissionService>();
 
         return services;
     }

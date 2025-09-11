@@ -1,7 +1,7 @@
 ﻿namespace OrganizerPRO.Application.Common.Interfaces;
 
 
-public interface ISyncLocalizationContext
+public interface ISyncLocalizationDbContext : IAsyncDisposable
 {
     DbSet<Localizer> Localizers { get; set; }
 

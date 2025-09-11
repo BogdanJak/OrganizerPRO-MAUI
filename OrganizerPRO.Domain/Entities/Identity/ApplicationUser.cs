@@ -1,4 +1,6 @@
-﻿namespace OrganizerPRO.Domain.Entities.Identity;
+﻿using Org.BouncyCastle.Utilities;
+
+namespace OrganizerPRO.Domain.Entities.Identity;
 public class ApplicationUser : IdentityUser, IAuditableEntity
 {
     public ApplicationUser()
@@ -33,7 +35,7 @@ public class ApplicationUser : IdentityUser, IAuditableEntity
     public string? SuperiorUserId { get; set; } = null;
     public bool? HasChildren { get; set; }
     public string? OrgName { get; set; } = null;
-    public Guid? SuperiorId { get; set; } = null;
+    public string? SuperiorId { get; set; } = null;
     public ApplicationUser? Superior { get; set; } = null;
     public DateTime? CreatedAt { get; set; }
     public string? CreatedBy { get; set; }

@@ -1,96 +1,129 @@
-﻿namespace OrganizerPRO.Infrastructure.Persistence.Configurations;
-
-
-public class IdentityUserConfiguration : IEntityTypeConfiguration<ApplicationUser>
+﻿namespace OrganizerPRO.Infrastructure.Persistence.Configurations
 {
-    public void Configure(EntityTypeBuilder<ApplicationUser> builder)
+    public class ApplicationUserConfiguration : IEntityTypeConfiguration<ApplicationUser>
     {
-        builder.HasMany(e => e.Logins)
-            .WithOne()
-            .HasForeignKey(ul => ul.UserId)
-            .IsRequired();
+        public void Configure(EntityTypeBuilder<ApplicationUser> builder)
+        {
+            // Each User can have many UserRoles
+            builder.HasMany(u => u.UserRoles)
+                .WithOne(ur => ur.User) // powiązanie z nawigacją w ApplicationUserRole
+                .HasForeignKey(ur => ur.UserId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany(e => e.Tokens)
-            .WithOne()
-            .HasForeignKey(ut => ut.UserId)
-            .IsRequired();
+            // Each User can have many UserClaims
+            builder.HasMany(u => u.UserClaims)
+                .WithOne(uc => uc.User)
+                .HasForeignKey(uc => uc.UserId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany(e => e.UserRoles)
-            .WithOne()
-            .HasForeignKey(ur => ur.UserId)
-            .IsRequired();
+            // Each User can have many UserLogins
+            builder.HasMany(u => u.Logins)
+                .WithOne(l => l.User)
+                .HasForeignKey(l => l.UserId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne(x => x.Superior).WithMany().HasForeignKey(u => u.SuperiorId);
-        builder.HasOne(x => x.Tenant).WithMany().HasForeignKey(u => u.TenantId);
-        builder.Navigation(e => e.Tenant).AutoInclude();
+            // Each User can have many UserTokens
+            builder.HasMany(u => u.Tokens)
+                .WithOne(t => t.User)
+                .HasForeignKey(t => t.UserId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Relacja z Tenant
+            builder.HasOne(u => u.Tenant)
+                .WithMany()
+                .HasForeignKey(u => u.TenantId);
+
+            builder.Navigation(u => u.Tenant).AutoInclude();
+        }
     }
-}
 
-public class ApplicationRoleConfiguration : IEntityTypeConfiguration<ApplicationRole>
-{
-    public void Configure(EntityTypeBuilder<ApplicationRole> builder)
+    public class ApplicationRoleConfiguration : IEntityTypeConfiguration<ApplicationRole>
     {
-        builder.HasIndex(x => x.NormalizedName).HasDatabaseName("RoleNameIndex").IsUnique(false);
-        builder.HasIndex(x => new { x.TenantId, x.Name }).IsUnique();
-        builder.HasOne(x => x.Tenant).WithMany().HasForeignKey(u => u.TenantId);
-        builder.Navigation(e => e.Tenant).AutoInclude();
-    }
-}
-public class ApplicationRoleClaimConfiguration : IEntityTypeConfiguration<ApplicationRoleClaim>
-{
-    public void Configure(EntityTypeBuilder<ApplicationRoleClaim> builder)
-    {
-        builder.HasOne(d => d.Role)
-            .WithMany(p => p.RoleClaims)
-            .HasForeignKey(d => d.RoleId)
-            .OnDelete(DeleteBehavior.Cascade);
-    }
-}
+        public void Configure(EntityTypeBuilder<ApplicationRole> builder)
+        {
+            builder.HasIndex(x => x.NormalizedName)
+                   .HasDatabaseName("RoleNameIndex")
+                   .IsUnique(false);
 
-public class ApplicationUserRoleConfiguration : IEntityTypeConfiguration<ApplicationUserRole>
-{
-    public void Configure(EntityTypeBuilder<ApplicationUserRole> builder)
-    {
-        builder.HasOne(d => d.Role)
-            .WithMany(p => p.UserRoles)
-            .HasForeignKey(d => d.RoleId)
-            .OnDelete(DeleteBehavior.Cascade);
-        builder.HasOne(d => d.User)
-            .WithMany(p => p.UserRoles)
-            .HasForeignKey(d => d.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
-    }
-}
+            builder.HasIndex(x => new { x.TenantId, x.Name }).IsUnique();
 
-public class ApplicationUserClaimConfiguration : IEntityTypeConfiguration<ApplicationUserClaim>
-{
-    public void Configure(EntityTypeBuilder<ApplicationUserClaim> builder)
-    {
-        builder.HasOne(d => d.User)
-            .WithMany(p => p.UserClaims)
-            .HasForeignKey(d => d.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
-    }
-}
+            builder.HasOne(r => r.Tenant)
+                   .WithMany()
+                   .HasForeignKey(r => r.TenantId);
 
-public class ApplicationUserLoginConfiguration : IEntityTypeConfiguration<ApplicationUserLogin>
-{
-    public void Configure(EntityTypeBuilder<ApplicationUserLogin> builder)
-    {
-        builder.HasOne(d => d.User)
-            .WithMany(p => p.Logins)
-            .HasForeignKey(d => d.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+            builder.Navigation(r => r.Tenant).AutoInclude();
+        }
     }
-}
 
-public class ApplicationUserTokenConfiguration : IEntityTypeConfiguration<ApplicationUserToken>
-{
-    public void Configure(EntityTypeBuilder<ApplicationUserToken> builder)
+    public class ApplicationRoleClaimConfiguration : IEntityTypeConfiguration<ApplicationRoleClaim>
     {
-        builder.HasOne(d => d.User)
-            .WithMany(p => p.Tokens)
-            .HasForeignKey(d => d.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+        public void Configure(EntityTypeBuilder<ApplicationRoleClaim> builder)
+        {
+            builder.HasOne(rc => rc.Role)
+                   .WithMany(r => r.RoleClaims)
+                   .HasForeignKey(rc => rc.RoleId)
+                   .OnDelete(DeleteBehavior.Cascade);
+        }
+    }
+
+    public class ApplicationUserRoleConfiguration : IEntityTypeConfiguration<ApplicationUserRole>
+    {
+        public void Configure(EntityTypeBuilder<ApplicationUserRole> builder)
+        {
+            builder.HasOne(ur => ur.Role)
+                   .WithMany(r => r.UserRoles)
+                   .HasForeignKey(ur => ur.RoleId)
+                   .IsRequired()
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne(ur => ur.User)
+                   .WithMany(u => u.UserRoles)
+                   .HasForeignKey(ur => ur.UserId)
+                   .IsRequired()
+                   .OnDelete(DeleteBehavior.Cascade);
+        }
+    }
+
+    public class ApplicationUserClaimConfiguration : IEntityTypeConfiguration<ApplicationUserClaim>
+    {
+        public void Configure(EntityTypeBuilder<ApplicationUserClaim> builder)
+        {
+            builder.HasOne(uc => uc.User)
+                   .WithMany(u => u.UserClaims)
+                   .HasForeignKey(uc => uc.UserId)
+                   .OnDelete(DeleteBehavior.Cascade);
+        }
+    }
+
+    public class ApplicationUserLoginConfiguration : IEntityTypeConfiguration<ApplicationUserLogin>
+    {
+        public void Configure(EntityTypeBuilder<ApplicationUserLogin> builder)
+        {
+            builder.HasKey(l => new { l.LoginProvider, l.ProviderKey });
+
+            builder.HasOne(l => l.User)
+                   .WithMany(u => u.Logins)
+                   .HasForeignKey(l => l.UserId)
+                   .IsRequired()
+                   .OnDelete(DeleteBehavior.Cascade);
+        }
+    }
+
+    public class ApplicationUserTokenConfiguration : IEntityTypeConfiguration<ApplicationUserToken>
+    {
+        public void Configure(EntityTypeBuilder<ApplicationUserToken> builder)
+        {
+            builder.HasKey(t => new { t.UserId, t.LoginProvider, t.Name });
+
+            builder.HasOne(t => t.User)
+                   .WithMany(u => u.Tokens)
+                   .HasForeignKey(t => t.UserId)
+                   .IsRequired()
+                   .OnDelete(DeleteBehavior.Cascade);
+        }
     }
 }
